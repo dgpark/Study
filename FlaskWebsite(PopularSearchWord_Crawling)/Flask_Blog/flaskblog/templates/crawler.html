@@ -1,0 +1,7 @@
+{% extends "layout.html" %}
+{% block content %}
+  <h1>실시간검색어</h1>
+  {% for key, value in dic.items() %}
+    <h6>{{key}}. {{value}}</h6>
+  {% endfor %}
+{% endblock content %}
