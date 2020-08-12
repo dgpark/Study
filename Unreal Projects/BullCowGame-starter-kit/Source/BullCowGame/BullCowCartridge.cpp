@@ -5,44 +5,68 @@ void UBullCowCartridge::BeginPlay() // When the game starts
 {
     Super::BeginPlay();
 
-    // Welcoming The Player
-    PrintLine(TEXT("Welcome to Bull Cows!"));
-    PrintLine(TEXT("Guess the 4 letter word!")); // Magic Number Remove!
-    PrintLine(TEXT("Press enter to continue..."));
-    
-    // Setting Up Game
-    HiddenWord = TEXT("cake"); // Set the HiddenWord
+    SetupGame();
 
-    // Set lives
-
-    // Prompt Player For Guess
+    PrintLine(FString::Printf(TEXT("The Hidden Word is %s"), *HiddenWord)); // Debug Line
 }
 
 void UBullCowCartridge::OnInput(const FString& Input) // When the player hits enter
 {
-    ClearScreen();
+    if (bGameOver) {
+        ClearScreen();
+        SetupGame();
+    }
+    else { // Checking PlayerGuess
+        ProcessGuess(Input);
+    }
+}
 
-    // Checking PlayerGuess
+void UBullCowCartridge::SetupGame() {
+    // Welcoming The Player
+    PrintLine(TEXT("Welcome to Bull Cows!"));
 
-    if (Input == HiddenWord) {
+    HiddenWord = TEXT("cakes");
+    Lives = HiddenWord.Len();
+    bGameOver = false;
+
+    PrintLine(TEXT("Guess the %i letter word!"), HiddenWord.Len());
+    PrintLine(TEXT("You have %i lives"), Lives);
+    PrintLine(TEXT("Type in your guess \npress enter to continue...")); // Prompt Player For Guess
+}
+
+void UBullCowCartridge::EndGame() {
+    bGameOver = true;
+    PrintLine(TEXT("\nPress enter to play again."));
+}
+
+void UBullCowCartridge::ProcessGuess(FString Guess) {
+    if (Guess == HiddenWord) {
         PrintLine(TEXT("You have Won!"));
+        EndGame();
+        return;
     }
-    else {
-        PrintLine(TEXT("You have Lost!"));
 
+    //// Check If Isogram
+    //if (!IsIsogram) {
+    //    PrintLine(TEXT("No repeating letters, guess again"));
+    //}
+
+    if (Guess.Len() != HiddenWord.Len()) {
+        PrintLine(TEXT("The hidden word is %i letters long"), HiddenWord.Len());
+        PrintLine(TEXT("Sorry, try guessing again! \nyou have %i lives remaining"), Lives);
+        return;
     }
-    // Check If Isogram
-    // Prompt To Guess Again
-    // Check Right Number of Characters
-    // Prompt To Guess Again
-
     // Remove Life
+    PrintLine(TEXT("Lost a life!"));
+    --Lives;
 
-    // Check If Lives > 0
-    // If Yes Guess Again
-    // Show Lives Left
-    // If No Show GameOver and HiddenWord?
-    // Prompt To Play Again, Press Enter To Play Again?
-    // Check User Input
-    // Play Again Or Quit
+    if (Lives <= 0) {
+        ClearScreen();
+        PrintLine(TEXT("You have no lives left!"));
+        PrintLine(TEXT("The hidden word was: %s"), *HiddenWord);
+        EndGame();
+        return;
+    }
+    // Show the player Bulls and Cows
+    PrintLine(TEXT("Guess again, you have %i lives left"), Lives);
 }
