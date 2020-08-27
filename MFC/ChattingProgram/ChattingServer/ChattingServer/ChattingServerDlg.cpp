@@ -13,12 +13,46 @@
 #endif
 
 
+void MyServer::AddWorkForAccept(UserData* ap_user) 
+{
+	CString str;
+	str.Format(L"%s에서 새로운 사용자가 접속했습니다.", ap_user->GetIP());
+	mp_parent->AddEventString(str);
+}
+
+void MyServer::AddWorkForCloseUser(UserData* ap_user, int a_error_code) 
+{
+	CString str;
+	str.Format(L"%s에서 새로운 사용자가 접속을 해제했습니다.", ap_user->GetIP());
+	mp_parent->AddEventString(str);
+}
+
+int MyServer::ProcessRecvData(SOCKET ah_socket, unsigned char a_msg_id, char* ap_recv_data, BS a_body_size) 
+{
+	UserData* p_user = (UserData*)FindUserData(ah_socket);
+
+	if (a_msg_id == NM_CHAT_DATA) {
+		CString str;
+		str.Format(L"%s : %s", p_user->GetIP(), (wchar_t*)ap_recv_data);
+		mp_parent->AddEventString(str);
+
+		for (int i = 0; i < m_max_user_count; ++i) {
+			// 현재 사용자가 접속 상태인지 확인
+			// 현재 접속한 사용자들에게(핸들값이 -1이 아닌 사용자들에게) 메시지 전송. (ex : 카톡 채팅방에 존재하는 사람들에게 같은 메시지를 띄움)
+			if (mp_user_list[i]->GetHandle() != -1) { // 0xFFFFFFFF(INVALID SOCKET값)
+				SendFrameData(mp_user_list[i]->GetHandle(), NM_CHAT_DATA, (const char*)(const wchar_t*)str, (str.GetLength() + 1) * 2);
+			}
+		}
+	}
+
+	return 1; //1:성공, 0:실패
+}
+
 // CChattingServerDlg 대화 상자
 
 
-
 CChattingServerDlg::CChattingServerDlg(CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_CHATTINGSERVER_DIALOG, pParent)
+	: CDialogEx(IDD_CHATTINGSERVER_DIALOG, pParent), m_server(this)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -32,6 +66,8 @@ void CChattingServerDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CChattingServerDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_MESSAGE(25001, &CChattingServerDlg::OnAcceptUser)
+	ON_MESSAGE(25002, &CChattingServerDlg::OnReadAndClose)
 END_MESSAGE_MAP()
 
 
@@ -46,7 +82,8 @@ BOOL CChattingServerDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 큰 아이콘을 설정합니다.
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
-	// TODO: 여기에 추가 초기화 작업을 추가합니다.
+	m_server.StartServer(L"127.0.0.1", 27100, m_hWnd);
+	AddEventString(L"서버 서비스를 시작합니다.");
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -87,3 +124,24 @@ HCURSOR CChattingServerDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+void CChattingServerDlg::AddEventString(const wchar_t* ap_string) {
+	int index = m_event_list.InsertString(-1, ap_string);
+	m_event_list.SetCurSel(index);
+}
+
+afx_msg LRESULT CChattingServerDlg::OnAcceptUser(WPARAM wParam, LPARAM lParam)
+{
+	// 새로운 클라이언트가 접속했을 때 발생하는 메시지를 처리
+	m_server.ProcessToAccept(wParam, lParam); // FD_ACCEPT
+	
+	return 0;
+}
+
+
+afx_msg LRESULT CChattingServerDlg::OnReadAndClose(WPARAM wParam, LPARAM lParam)
+{
+	// 접속한 클라이언트가 데이터를 전송하거나 접속을 해제할 때 발생하는 메시지를 처리.
+	m_server.ProcessClientEvent(wParam, lParam); // FD_READ, FD_CLOSE
+
+	return 0;
+}
