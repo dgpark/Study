@@ -82,7 +82,7 @@ BOOL CChattingServerDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 큰 아이콘을 설정합니다.
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
-	m_server.StartServer(L"127.0.0.1", 27100, m_hWnd);
+	m_server.StartServer(L"127.0.0.1", 27100, m_hWnd); // 서버 ip를 네트워크 ip로 변경하여 사용하면 됨.
 	AddEventString(L"서버 서비스를 시작합니다.");
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.

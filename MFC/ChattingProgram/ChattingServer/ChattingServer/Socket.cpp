@@ -64,7 +64,9 @@ int RecvManager::AddData(char* ap_data, int a_size) {
 	// 현재 수신된 데이터의 크기를 반환
 	return m_cur_size;
 }
-
+Socket::Socket() {
+	int a = -1;
+}
 Socket::Socket(unsigned char a_valid_key, int a_data_notify_id) {
 	// 사용자가 지정한 프로토콜 구분 값을 저장한다.
 	m_valid_key = a_valid_key;
@@ -235,7 +237,7 @@ void UserData::CloseSocket(char a_linger_flag) {
 }
 
 ServerSocket::ServerSocket(unsigned char a_valid_key, unsigned short int a_max_user_count, UserData* ap_user_data, 
-	int a_accept_notify_id, int a_data_notify_id) {
+	int a_accept_notify_id, int a_data_notify_id) : Socket(a_valid_key, a_data_notify_id) {
 	// 서버에 접속할 최대 사용자 수를 저장한다.
 	m_max_user_count = a_max_user_count;
 	// Listen 작업용 소켓을 초기화한다.
@@ -288,7 +290,8 @@ int ServerSocket::StartServer(const wchar_t* ap_ip_address, int a_port, HWND ah_
 	serv_addr.sin_addr.s_addr = inet_addr(temp_ip_address);
 	serv_addr.sin_port = htons((short unsigned int)a_port);
 	// 네트워크 장치에 mh_listen_socket 소켓을 연결한다.
-	if (bind(mh_listen_socket, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+	if (bind(mh_listen_socket, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+		int errorCheck = WSAGetLastError();
 		//실패한 경우 소켓을 제거하고 mh_listen_socket 변수를 초기화한다.
 		closesocket(mh_listen_socket);
 		mh_listen_socket = INVALID_SOCKET;
@@ -407,5 +410,149 @@ int ServerSocket::ProcessRecvData(SOCKET ah_socket, unsigned char a_msg_id, char
 	}
 	// 수신된 데이터를 정상적으로 처리함. 만약, 수신 데이터를 처리하던중에 소켓을 제거했으면 0을 반환해야 한다.
 	// 0을 반환하면 이소켓에 대해서 비동기 작업이 중단된다.
+	return 1;
+}
+
+ClientSocket::ClientSocket(unsigned char a_valid_key,
+	int a_connect_notify_id, int a_data_notify_id) : Socket(a_valid_key, a_data_notify_id)
+{
+	// 접속 상태를 '해제 상태'로 초기화 한다.
+	m_connect_flag = 0;
+	// 소켓 핸들을 초기화 한다.
+	mh_socket = INVALID_SOCKET;
+	// FD_CONNECT 이벤트 발생시에 사용할 윈도우 메시지 번호를 기억한다.
+	m_connect_notify_id = a_connect_notify_id;
+}
+
+ClientSocket::~ClientSocket()
+{
+	// 서버와 통신하기 위해 소켓이 생성되어 있다면 소켓을 제거한다.
+	if (mh_socket != INVALID_SOCKET) closesocket(mh_socket);
+}
+
+int ClientSocket::ConnectToServer(const wchar_t* ap_ip_address, int a_port_num, HWND ah_notify_wnd)
+{
+	// 접속을 시도중이거나 접속된 상태라면 접속을 시도하지 않는다.
+	if (m_connect_flag != 0) return 0; // 중복 시도 또는 중복 접속 오류
+
+	// 소켓 이벤트로 인한 윈도우 메시지를 받을 윈도우의 핸들을 저장한다.
+	mh_notify_wnd = ah_notify_wnd;
+	// 서버와 통신할 소켓을 생성한다. (TCP)
+	mh_socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+	sockaddr_in srv_addr;
+	char temp_ip_address[16];
+	// 유니코드 형식으로 전달된 IP 주소를 ASCII 형식으로 변경한다.
+	UnicodeToAscii(temp_ip_address, (wchar_t*)ap_ip_address);
+	// 서버에 접속하기 위하여 서버의 IP 주소와 포트 번호로 접속 정보를 구성
+	srv_addr.sin_family = AF_INET;
+	srv_addr.sin_addr.s_addr = inet_addr(temp_ip_address);
+	srv_addr.sin_port = htons(a_port_num);
+
+	// 서버에 접속하는 connect 함수가 응답없음 상태에 빠질수 있기 때문에 비동기를 설정
+	// 서버 접속에 대한 결과인 FD_CONNECT 이벤트가 발생하면 ah_notify_wnd에 해당하는 윈도우로
+	// m_connect_notify_id에 해당하는 윈도우 메시지를 전송한다.
+	WSAAsyncSelect(mh_socket, ah_notify_wnd, m_connect_notify_id, FD_CONNECT);
+	// 서버에 접속을 시도한다.
+	connect(mh_socket, (sockaddr*)&srv_addr, sizeof(srv_addr));
+	// 접속 상태를 '접속 시도중'으로 변경한다.
+	m_connect_flag = 1;
+
+	return 1;
+}
+
+int ClientSocket::ResultOfConnection(LPARAM lParam)
+{
+	if (WSAGETSELECTERROR(lParam) == 0) { // 접속 에러가 없음. 즉, 서버에 성공적으로 접속
+		m_connect_flag = 2; // 접속 상태를 '접속'으로 변경
+		// 접속된 소켓으로 서버에서 데이터가 수신되거나 연결이 해제되었을때 윈도우 메시지를
+		// 받을수 있도록 비동기를 설정
+		WSAAsyncSelect(mh_socket, mh_notify_wnd, m_data_notify_id, FD_READ | FD_CLOSE);
+		return 1; // 접속 성공
+	}
+	else {
+		// 접속 실패
+		closesocket(mh_socket);		// 서버와 통신하기 위해 만든 소켓을 제거
+		mh_socket = INVALID_SOCKET; // 소켓을 초기화
+		m_connect_flag = 0;			// 접속 상태를 '해제'로 변경
+	}
+	return 0; // 접속 실패
+}
+
+int ClientSocket::ProcessServerEvent(WPARAM wParam, LPARAM lParam) 
+{
+	// 접속이 해제 되었을 때, 추가적인 메시지를 사용하지 않고 이 함수의 반환 값으로
+	// 구별해서 사용할 수 있도록 FD_READ는 1, FD_CLOSE는 0값을 반환하도록 구현.
+	int state = 1;
+	if (WSAGETSELECTEVENT(lParam) == FD_READ) {
+		// 서버에서 데이터를 전송한 경우 수신된 데이터를 처리하기 위한 함수를 호출
+		ProcessRecvEvent((SOCKET)wParam);
+	}
+	else { // FD_CLOSE, 서버가 접속을 해제한 경우
+		state = 0;
+		m_connect_flag = 0;			// 접속 상태를 '해제'로 변경한다.
+		closesocket(mh_socket);		// 서버와 통신하기 위해 생성한 소켓을 제거한다.
+		mh_socket = INVALID_SOCKET;	// 소켓 핸들을 저장하는 변수를 초기화 한다.
+	}
+	return state; // 이벤트 종류를 반환
+}
+
+void ClientSocket::DisconnectSocket(SOCKET ah_socket, int a_error_code)
+{
+	// 접속 상태를 '해제'로 변경
+	m_connect_flag = 0;
+	LINGER temp_linger = { TRUE, 0 };
+	// 서버에서 데이터를 수신하고 있는 상태라면 강제로 소켓을 제거하지 못하기 때문에
+	// 링거 옵션을 설정하여 데이터를 수신하고 있더라도 소켓을 제거할 수 있도록 한다.
+	setsockopt(mh_socket, SOL_SOCKET, SO_LINGER, (char*)&temp_linger, sizeof(temp_linger));
+	// 소켓을 제거한다.
+	closesocket(mh_socket);
+	// 소켓 핸들 값을 저장하는 변수를 초기화 한다.
+	mh_socket = INVALID_SOCKET;
+}
+
+int ClientSocket::SendFrameData(unsigned char a_message_id, const char* ap_body_data, BS a_body_size)
+{
+	return Socket::SendFrameData(mh_socket, a_message_id, ap_body_data, a_body_size);
+}
+
+int ClientSocket::ProcessRecvData(SOCKET ah_socket, unsigned char a_msg_id, char* ap_recv_data, BS a_body_size)
+{
+	if (a_msg_id == 251) {
+		char* p_send_data; // 예약 메시지 251번은 서버에 큰용량의 데이터를 전송하기 위해 사용
+		// 현재 전송 위치를 얻는다.
+		BS send_size = m_send_man.GetPosition(&p_send_data);
+		// 전송할 데이터가 더 있다면 예약 메시지 번호인 252를 사용하여 서버에게 데이터를 전송한다.
+		if (m_send_man.IsProcessing()) Socket::SendFrameData(mh_socket, 252, p_send_data, send_size);
+		else {
+			// 지금이 분할된 데이터의 마지막 부분이라면 예약 메시지 번호인 253번을 사용하여 서버에게 데이터를 전송한다.
+			Socket::SendFrameData(mh_socket, 253, p_send_data, send_size);
+			// 마지막 데이터를 전송하고 전송에 사용했던 메모리를 삭제한다.
+			m_send_man.DeleteData();
+			// 클라이언트 소켓을 사용하는 윈도우에 전송이 완료되었음을 알려준다.
+			// 전송이 완료되었을때 프로그램에 어떤 표시를 하고 싶다면 해당 윈도우에서 LM_SEND_COMPLETED 메시지를 체크하면 된다.
+			::PostAppMessage(mh_notify_wnd, LM_SEND_COMPLETED, 0, 0);
+		}
+	}
+	else if (a_msg_id == 252) {
+		// 252번은 대용량의 데이터를 수신할때 사용하는 예약된 메시지 번호이다.
+		// 수신된 데이터는 수신을 관리하는 객체로 넘겨서 데이터를 합친다.
+		m_recv_man.AddData(ap_recv_data, a_body_size);
+		// 252번은 아직도 추가로 수신할 데이터가 있다는 뜻이기 때문에 예약 메시지 251번을 서버에 전송하여
+		// 추가 데이터를 요청
+		Socket::SendFrameData(mh_socket, 251, NULL, 0);
+	}
+	else if (a_msg_id == 253) {
+		// 253번은 대용량의 데이터를 수신할때 사용하는 예약된 메시지 번호이다.
+		// 수신된 데이터는 수신을 관리하는 객체로 넘겨서 데이터를 합친다.
+		m_recv_man.AddData(ap_recv_data, a_body_size);
+		// 253번은 데이터 수신이 완료되었다는 메시지이기 때문에 클라이언트 소켓을 사용하는 윈도우에 완료되었음을 알려준다.
+		// 따라서 윈도우에서 수신이 완료된 데이터를 사용하려면 LM_RECV_COMPLETED 메시지를 사용하면 된다.
+		// LM_RECV_COMPLETED 메시지를 수신한 처리기에서 수신할때 사용한 메모리를 DeleteData 함수를 호출해서 제거해야한다.
+		::PostMessage(mh_notify_wnd, LM_RECV_COMPLETED, 0, 0);
+	}
+
+	// 수신된 데이터를 정상적으로 처리함. 만약, 수신 데이터를 처리하던 중에 소켓을 제거했으면 0을 반환해야 한다.
+	// 0을 반환하면 이 소켓에 대해서 비동기 작업이 중단된다.
 	return 1;
 }

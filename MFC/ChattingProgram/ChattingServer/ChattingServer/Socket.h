@@ -2,6 +2,7 @@
 
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <WinSock2.h>
+#pragma comment(lib, "ws2_32.lib")
 
 #define LM_SEND_COMPLETED      29001
 #define LM_RECV_COMPLETED      29002
@@ -60,7 +61,7 @@ protected:
 	int m_data_notify_id;
 public:
 	// 객체 생성시에 프로토콜 구분 값과 데이터 수신 및 연결 해제에 사용할 메시지 ID를 지정해야 함.
-	Socket(){}
+	Socket();
 	Socket(unsigned char a_valid_key, int a_data_notify_id);
 	~Socket();
 
@@ -176,9 +177,56 @@ public:
 	// 전체 사용자에 대한 정보를 얻는 경우
 	inline UserData** GetUserList() { return mp_user_list; }
 
-/*	// 색인을 사용하여 특정 사용자에 대한 정보를 얻는 경우
-	inline TW_UserData* GetUserData(int a_index) { return mp_user_list[a_index]; }
-*/
+	// 색인을 사용하여 특정 사용자에 대한 정보를 얻는 경우
+	inline UserData* GetUserData(int a_index) { return mp_user_list[a_index]; }
+
 	// 최대 사용자 수를 얻는 경우
 	unsigned short int GetMaxUserCount() { return m_max_user_count; }
 };
+
+class ClientSocket : public Socket
+{
+protected:
+	// 서버와 통신하기 위해 사용할 소켓 핸들
+	SOCKET mh_socket;
+	// 0: 접속 안됨, 1: 접속 시도중, 2: 접속 중
+	char m_connect_flag;
+	// 서버에 접속을 시도한 결과를 알려줄 윈도우 메시지를 저장한다.
+	int m_connect_notify_id;
+	// 서버에 큰 데이터를 전송하기 위해 사용할 객체
+	SendManager m_send_man;
+	// 서버에 큰 데이터를 수신하기 위해 사용할 객체
+	RecvManager m_recv_man;
+
+public:
+	ClientSocket(unsigned char a_valid_key, int a_connect_notify_id = 26001, int a_data_notify_id = 26002);
+	virtual ~ClientSocket();
+
+	inline SendManager* GetSendMan() { return &m_send_man; }  // 전송용 객체의 주소를 얻는다.
+	inline RecvManager* GetRecvMan() { return &m_recv_man; }  // 수신용 객체의 주소를 얻는다.
+
+	// 서버에 접속을 시도한다.
+	int ConnectToServer(const wchar_t* ap_ip_address, int a_port_num, HWND ah_notify_wnd);
+	// 서버 접속에 대한 결과가 메시지로 전달되었을때 이 함수를 사용
+	// 반환값이 1 : 서버에 접속 성공, 0 : 서버에 접속 실패
+	int ResultOfConnection(LPARAM lParam);
+	// 서버가 데이터를 전송하거나 연결을 해제했을때 발생하는 윈도우 메시지에서 이 함수를 사용하면 됩니다.
+	// 반환값이 0 이면 서버가 접속을 해제, 1이면 서버에서 데이터를 수신
+	int ProcessServerEvent(WPARAM wParam, LPARAM lParam);
+	// 서버와 강제로 접속을 해제할 때 사용.
+	virtual void DisconnectSocket(SOCKET ah_socket, int a_error_code);
+	// 서버로 데이터를 전송할 때 사용합니다. 메시지 ID와 전송할 데이터의 주소, 데이터의 크기를 넘겨주면
+	// 약속된 프로토콜 형식으로 구성해서 전송.
+	int SendFrameData(unsigned char a_message_id, const char* ap_body_data, BS a_body_size);
+	// FD_READ 이벤트가 발생했을때 실제 데이터를 처리하는 함수 
+	// (서버 소켓을 상속 받은 클래스에서 반드시 재정의하여 자신이 정의한 메시지를 처리해야 한다.)
+	virtual int ProcessRecvData(SOCKET ah_socket, unsigned char a_msg_id, char* ap_recv_data, BS a_body_size);
+
+	// 서버와의 접속상태를 알고 싶을때 사용. 0 : 해제상태, 1 : 접속상태
+	// 내부적으로는 상태를 세가지로 관리하지만 외부에 알려줄때는 두가지 상태로 알려준다.
+	// '접속 시도중' 상태는 해제로 간주.
+	inline int IsConnected() { return m_connect_flag == 2; }
+	// 서버와 통신하기 위해 생성한 소켓의 핸들 값을 알고 싶을 때 사용한다.
+	inline SOCKET GetHandle() { return mh_socket; }
+};
+
