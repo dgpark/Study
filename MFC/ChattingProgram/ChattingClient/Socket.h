@@ -61,7 +61,6 @@ protected:
 	int m_data_notify_id;
 public:
 	// 객체 생성시에 프로토콜 구분 값과 데이터 수신 및 연결 해제에 사용할 메시지 ID를 지정해야 함.
-	Socket() {};
 	Socket(unsigned char a_valid_key, int a_data_notify_id);
 	~Socket();
 
@@ -72,12 +71,12 @@ public:
 	int ReceiveData(SOCKET ah_socket, BS a_body_size);
 	// 데이터가 수신되었을때 수신된 데이터를 처리하는 함수
 	void ProcessRecvEvent(SOCKET ah_socket);
-	
+
 	// 접속된 대상을 끊을때 사용하는 함수 (자식 클래스에서 꼭 재정의해서 사용해야 함)
 	virtual void DisconnectSocket(SOCKET ah_socket, int a_error_code);
 	// 수신된 데이터를 처리하는 함수
 	virtual int ProcessRecvData(SOCKET ah_socket, unsigned char a_msg_id, char* ap_recv_data, BS a_body_size);
-	
+
 	// ASCII 형식의 문자열을 유니코드로 변환
 	static void AsciiToUnicode(wchar_t* ap_dest_ip, char* ap_src_ip);
 	// 유니코드 형식의 문자열을 ASCII로 변환
@@ -100,14 +99,14 @@ public:
 
 	inline SOCKET GetHandle() { return mh_socket; }
 	inline void SetHandle(SOCKET ah_socket) { mh_socket = ah_socket; }
-	inline SendManager *GetSendMan() { return mp_send_man; }
-	inline RecvManager *GetRecvMan() { return mp_recv_man; }
+	inline SendManager* GetSendMan() { return mp_send_man; }
+	inline RecvManager* GetRecvMan() { return mp_recv_man; }
 
 	wchar_t* GetIP();
 	void SetIP(const wchar_t* ap_ip_address);
 	void CloseSocket(char a_linger_flag);
 
-	virtual UserData *CreateObject() { return new UserData; }
+	virtual UserData* CreateObject() { return new UserData; }
 };
 
 /* //추후 로그인 기능 구현
@@ -147,7 +146,7 @@ public:
 	int ProcessToAccept(WPARAM wParam, LPARAM lParam);
 	// Accept 시에 추가적으로 해야할 작업이 있다면 이 함수를 오버라이딩해서 처리해야함
 	virtual void AddWorkForAccept(UserData* ap_user) { }
-	
+
 	// 최대 사용자수 초과시에 추가적으로 해야할 작업이 있다면 이 함수를 오버라이딩해서 처리해야함
 	virtual void ShowLimitError(const wchar_t* ap_ip_address) { }
 

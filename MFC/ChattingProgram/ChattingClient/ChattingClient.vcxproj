@@ -186,6 +186,7 @@
     <ClInclude Include="ChattingClient.h" />
     <ClInclude Include="ChattingClientDlg.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="LogInForm.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Socket.h" />
@@ -194,6 +195,7 @@
   <ItemGroup>
     <ClCompile Include="ChattingClient.cpp" />
     <ClCompile Include="ChattingClientDlg.cpp" />
+    <ClCompile Include="LogInForm.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

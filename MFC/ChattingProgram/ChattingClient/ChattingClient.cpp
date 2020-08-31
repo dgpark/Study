@@ -6,6 +6,7 @@
 #include "framework.h"
 #include "ChattingClient.h"
 #include "ChattingClientDlg.h"
+#include "LogInForm.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -39,7 +40,8 @@ BOOL CChattingClientApp::InitInstance()
 {
 	CWinApp::InitInstance();
 
-	CChattingClientDlg dlg;
+	//CChattingClientDlg dlg;
+	LogInForm dlg;
 	m_pMainWnd = &dlg;
 	dlg.DoModal();
 	

@@ -55,8 +55,8 @@ BOOL CChattingClientDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 큰 아이콘을 설정합니다.
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
-	m_client.ConnectToServer(L"127.0.0.1", 27100, m_hWnd); // 접속할 서버의 ip를 해당 서버의 ip와 동일하게 변경하여 사용하면 됨.
-	AddEventString(L"서버 서비스를 시작합니다.");
+	m_client.ConnectToServer(/*L"192.168.43.113"*/L"127.0.0.1", 27100, m_hWnd);
+	//AddEventString(L"클라이언트 서비스를 시작합니다.");
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
 
@@ -124,7 +124,7 @@ afx_msg LRESULT CChattingClientDlg::OnConnected(WPARAM wParam, LPARAM lParam)
 	else {
 		AddEventString(L"서버에 접속할수 없습니다!");
 	}
-
+	
 	return 0;
 }
 
