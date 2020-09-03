@@ -110,7 +110,7 @@ public:
 };
 
 /* //추후 로그인 기능 구현
-class UserAccount : public UserData {
+class UserAccountData : public UserData {
 protected:
 	wchar_t id[32];
 	wchar_t password[32];

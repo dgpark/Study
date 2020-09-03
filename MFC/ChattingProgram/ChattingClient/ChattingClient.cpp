@@ -6,7 +6,7 @@
 #include "framework.h"
 #include "ChattingClient.h"
 #include "ChattingClientDlg.h"
-#include "LogInForm.h"
+#include "LogInFormDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

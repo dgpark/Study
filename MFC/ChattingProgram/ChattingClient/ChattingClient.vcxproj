@@ -191,20 +191,17 @@
     <ClInclude Include="ChattingClient.h" />
     <ClInclude Include="ChattingClientDlg.h" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="LogInForm.h" />
+    <ClInclude Include="LogInFormDlg.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Socket.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="UserDB.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ChattingClient.cpp" />
     <ClCompile Include="ChattingClientDlg.cpp" />
-    <ClCompile Include="LogInForm.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
+    <ClCompile Include="LogInFormDlg.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -213,6 +210,9 @@
     </ClCompile>
     <ClCompile Include="Socket.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="UserDB.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>

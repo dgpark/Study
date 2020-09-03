@@ -36,7 +36,10 @@
     <ClInclude Include="Socket.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="LogInForm.h">
+    <ClInclude Include="UserDB.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="LogInFormDlg.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
@@ -53,7 +56,10 @@
     <ClCompile Include="Socket.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="LogInForm.cpp">
+    <ClCompile Include="UserDB.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="LogInFormDlg.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
