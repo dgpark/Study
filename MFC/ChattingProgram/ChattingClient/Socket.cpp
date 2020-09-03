@@ -1,4 +1,6 @@
 #include "Socket.h"
+//#include "pch.h"
+
 
 ExchangeManager::ExchangeManager() {
 	mp_data = nullptr;
