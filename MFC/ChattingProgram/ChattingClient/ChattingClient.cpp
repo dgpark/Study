@@ -41,7 +41,7 @@ BOOL CChattingClientApp::InitInstance()
 	CWinApp::InitInstance();
 
 	//CChattingClientDlg dlg;
-	LogInForm dlg;
+	LogInFormDlg dlg;
 	m_pMainWnd = &dlg;
 	dlg.DoModal();
 	

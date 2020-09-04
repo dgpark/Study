@@ -3,17 +3,17 @@
 
 // LogInForm 대화 상자
 
-class LogInForm : public CDialogEx
+class LogInFormDlg : public CDialogEx
 {
-	DECLARE_DYNAMIC(LogInForm)
+	DECLARE_DYNAMIC(LogInFormDlg)
 
 public:
-	LogInForm(CWnd* pParent = nullptr);   // 표준 생성자입니다.
-	virtual ~LogInForm();
+	LogInFormDlg(CWnd* pParent = nullptr);   // 표준 생성자입니다.
+	virtual ~LogInFormDlg();
 
 // 대화 상자 데이터입니다.
 #ifdef AFX_DESIGN_TIME
-	enum { IDD = IDD_LogInForm };
+	enum { IDD = IDD_LOGINFORM_DIALOG };
 #endif
 
 protected:
@@ -22,4 +22,5 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedLoginBtn();
+	afx_msg void OnBnClickedRegisterBtn();
 };
