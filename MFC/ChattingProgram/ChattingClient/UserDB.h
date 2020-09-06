@@ -14,10 +14,12 @@ public:
 	UserDB();
 	~UserDB();
 	bool Connect();
-	int Login(const wchar_t *id, const wchar_t *password);
-	int IdCheck(const wchar_t* id);
 
-	//void Register();
+	bool Register(HWND register_wnd, const wchar_t* id, const wchar_t* password, const wchar_t* pf_name);
+
+	bool Login(HWND register_wnd, const wchar_t *id, const wchar_t *password);
+	bool IdDuCheck(HWND register_wnd, const wchar_t* id);
+
 	//void setProfileName();
 	//void getProfileName();
 };

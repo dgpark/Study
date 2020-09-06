@@ -48,23 +48,10 @@ void LogInFormDlg::OnBnClickedLoginBtn()
 		MessageBox(NULL, L"DB연결에 실패했습니다.", MB_OK);
 	}
 	else {
-		int loginResult = User.Login((const wchar_t*)(LPCTSTR)id, (const wchar_t*)(LPCTSTR)password);
-
-		switch (loginResult) {
-		case 1: // id && password is correct
-		{
-			this->ShowWindow(SW_HIDE);
+		if (User.Login(m_hWnd, (const wchar_t*)(LPCTSTR)id, (const wchar_t*)(LPCTSTR)password)) {
 			CChattingClientDlg dlg;
 			dlg.DoModal();
-			break;
 		}
-		case -1: // query extraction fail
-			MessageBox(NULL, L"query 추출에 실패했습니다.", MB_OK);
-			break;
-		case -2: // id or password is incorrect
-			MessageBox(NULL, L"Id 또는 Password를 잘못 입력했습니다.", MB_OK);
-			break;
-		} // end of switch statement
 	} // end of Connect
 }
 

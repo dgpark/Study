@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "ChattingClient.h"
 #include "RegisterDlg.h"
+#include "LogInFormDlg.h"
 #include "afxdialogex.h"
 
 
@@ -19,6 +20,7 @@ RegisterDlg::RegisterDlg(CWnd* pParent /*=nullptr*/)
 
 RegisterDlg::~RegisterDlg()
 {
+
 }
 
 void RegisterDlg::DoDataExchange(CDataExchange* pDX)
@@ -38,12 +40,29 @@ END_MESSAGE_MAP()
 
 void RegisterDlg::OnBnClickedRegister()
 {
-	CString id, password, pfName;
+	CString id, password, pf_name;
 	GetDlgItemText(IDC_ID_EDIT, id);
 	GetDlgItemText(IDC_PW_EDIT, password);
-	GetDlgItemText(IDC_PW_EDIT, pfName);
+	GetDlgItemText(IDC_PW_EDIT, pf_name);
 
+	UserDB User;
 
+	if (id.GetLength() != 0 && password.GetLength() != 0 && pf_name.GetLength() != 0) { // id, password, 프로필이름 규칙 만족하는 경우. (나중에 함수로 변경)
+		if (!User.Connect()) {
+			MessageBox(NULL, L"DB연결에 실패했습니다.", MB_OK);
+		}
+		else {
+			if (User.Register(m_hWnd, id, password, pf_name)) {
+				LogInFormDlg dlg;
+				dlg.DoModal();
+			}
+		}
+	}
+	else { // 나중에 함수안에서 예외처리
+		MessageBox(NULL, L"아이디, 비밀번호, 프로필이름을 바르게 입력하세요.", MB_OK);
+	}
+
+	
 }
 
 
@@ -57,18 +76,7 @@ void RegisterDlg::OnBnClickedIdDuCheckButton()
 		MessageBox(NULL, L"DB연결에 실패했습니다.", MB_OK);
 	}
 	else {
-		bool DuplicateCheck = User.IdCheck((const wchar_t*)(LPCTSTR)id);
-		switch (DuplicateCheck) {
-		case 0: // 사용가능
-			MessageBox(NULL, L"id를 사용하여도 좋습니다.", MB_OK);
-			break;
-		case 1:
-			MessageBox(NULL, L"중복된 id입니다.", MB_OK);
-			break;
-		case -1: // query extraction fail
-			MessageBox(NULL, L"query 추출에 실패했습니다.", MB_OK);
-			break;
-		}
+		User.IdDuCheck(m_hWnd,(const wchar_t*)(LPCTSTR)id);
 	}
 
 }
